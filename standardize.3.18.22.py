@@ -1,3 +1,5 @@
+import csv
+
 metadata = {
     'protocolName': 'Standardize DNA Concentrations',
     'author': 'AMB, last updated 3/21/22',
@@ -22,8 +24,14 @@ def run(protocol):
     num_destination_plates = 2
 
     # sample standardization info
-
-
+    # paste data from csv here (in between '''  ''')
+    input_data = '''
+        source_slot,source_well,dest_slot,dest_well,vol_dna,vol_water
+        1,A1,1,A1,40,60
+        1,C1,1,B1,66.67,33.33
+        2,D1,2,C1,20,80
+        3,E3,2,D1,10
+        '''
 
 
 ########## DO NOT EDIT BELOW THIS LINE ##########
@@ -61,26 +69,36 @@ def run(protocol):
     water_reservoir = protocol.load_labware(
         'nest_12_reservoir_15ml', '4')
     [water] = [reagent_reservoir.wells_by_name()[well] for well in ['A1']]
-    if num_source_plates == 1:
-        dna_source_plate = [protocol.load_labware(
-            'nest_96_wellplate_100ul_pcr_full_skirt',
-            str(slot)) for slot in [1]]
-    if num_source_plates == 2:
-        dna_source_plate = [protocol.load_labware(
-            'nest_96_wellplate_100ul_pcr_full_skirt',
-            str(slot)) for slot in [1, 2]]
-    if num_source_plates == 3:
-        dna_source_plate = [protocol.load_labware(
-            'nest_96_wellplate_100ul_pcr_full_skirt',
-            str(slot)) for slot in [1, 2, 3]]
-    if dna_destinatio_plate == 1:
-        dna_destination_plate = [protocol.load_labware(
-            'biorad_96_wellplate_200ul_pcr',
-            str(slot)) for slot in [5]]
-    if dna_destinatio_plate == 2:
-        dna_destination_plate = [protocol.load_labware(
-            'biorad_96_wellplate_200ul_pcr',
-            str(slot)) for slot in [5, 6]]
+    # add first source DNA plate
+    source_P1 = [protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '1')]
+    #if more than one plate, add 2nd
+    if num_source_plates > 1:
+        source_P2 = [protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '2')]
+    # if more than 2 plates, add 3rd
+    if num_source_plates > 2:
+        source_P3 = [protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '3')]
+    # add first DNA destination plate
+    dest_P1 = [protocol.load_labware('biorad_96_wellplate_200ul_pcr', '5')]
+    # if more than one plate, add second
+    if num_destination_plates > 1:
+        dest_P2 = [protocol.load_labware('biorad_96_wellplate_200ul_pcr', '6')]
+
+    # parse input data
+    csv_data = input_data.splitlines()[1:] #discard first blank line from data
+    csv_reader = csv.DictReader(csv_data)
+    for csv_row in csv_reader:
+        source_slot = csv_row['source_slot']
+        source_well = csv_row['source_well']
+        dest_slot = csv_row['dest_slot']
+        dest_well = csv_row['dest_well']
+        vol_dna = float(csv_row['vol_dna'])
+        vol_water = float(csv_row['vol_water'])
+
+    # transfer water
+    for line in csv_row:
+        if vol_water > 0 and vol_water <= 20:
+            p20.transfer(vol_dna, water_reservoir.water, )
+
 
 
 
