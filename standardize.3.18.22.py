@@ -24,18 +24,24 @@ def run(protocol):
     # number of destination (standardized) plates (integar, min: 1 max: 2)
     num_destination_plates = 2
 
+    # source plate type ('biorad_200ul' or 'nest_100ul', all lowercase and in single quotes)
+    source_plate_type = 'nest_100ul'
+
+    # destination plate type ('biorad_200ul' or 'nest_100ul', all lowercase and in single quotes)
+    destination_plate_type = 'biorad_200ul'
+
     # sample standardization info
     # paste data from csv here (in between '''  ''')
     input_data = '''
     source_slot,source_well,dest_slot,dest_well,vol_dna,vol_water
     1,A1,5,A1,40,60
-    1,C1,5,B1,66.67,19.5
-    1,D1,5,C1,20,80
-    2,E3,5,D1,10.2,90
-    2,A12,6,A1,45.9,43.0
-    2,B5,6,B1,87.2,1.7
-    2,H8,6,C1,80.1,8.8
-    3,C11,6,D1,54.1,34.8
+    1,C1,5,A2,66.67,19.5
+    1,D1,5,A3,20,80
+    2,E3,5,B4,10.2,90
+    2,A12,5,B5,45.9,43.0
+    2,B5,5,B6,87.2,1.7
+    2,H8,5,D11,80.1,8.8
+    3,C11,5,H12,54.1,34.8
     '''
 
 
@@ -77,18 +83,43 @@ def run(protocol):
 
     # load plates
     # add first source DNA plate
-    protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '1')
+    if source_plate_type == 'nest_100ul':
+        protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '1')
+    elif source_plate_type == 'biorad_200ul':
+        protocol.load_labware('biorad_96_wellplate_200ul_pcr', '1')
+    else:
+        raise Exception("Invalid source plate type")
     #if more than one plate, add 2nd
     if num_source_plates > 1:
-        protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '2')
+        if source_plate_type == 'nest_100ul':
+            protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '2')
+        elif source_plate_type == 'biorad_200ul':
+            protocol.load_labware('biorad_96_wellplate_200ul_pcr', '2')
+        else:
+            raise Exception('Invalid source plate type')
     # if more than 2 plates, add 3rd
     if num_source_plates > 2:
-        protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '3')
+        if source_plate_type == 'nest_100ul':
+            protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '3')
+        elif source_plate_type == 'biorad_200ul':
+            protocol.load_labware('biorad_96_wellplate_200ul_pcr', '3')
+        else:
+            raise Exception('Invalid source plate type')
     # add first DNA destination plate
-    protocol.load_labware('biorad_96_wellplate_200ul_pcr', '5')
+    if destination_plate_type == 'nest_100ul':
+        protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt','5')
+    elif destination_plate_type == 'biorad_200ul':
+        protocol.load_labware('biorad_96_wellplate_200ul_pcr', '5')
+    else:
+        raise Exception('Invalid destination plate type')
     # if more than one plate, add second
     if num_destination_plates > 1:
-        protocol.load_labware('biorad_96_wellplate_200ul_pcr', '6')
+        if destination_plate_type == 'biorad_200ul':
+            protocol.load_labware('biorad_96_wellplate_200ul_pcr', '6')
+        elif destination_plate_type == 'nest_100ul':
+            protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '6')
+        else:
+            raise Exception('Invalid destination plate type')
 
     # parse input data
     csv_data = [[val.strip() for val in line.split(',')]
@@ -109,6 +140,9 @@ def run(protocol):
     for row in csv_data:
         dest_well = protocol.loaded_labwares[int(row[2])].wells_by_name()[row[3]]
         vol_water = float(row[5])
+        # check volume
+        if vol_water < 1.0 or vol_water > 200.0:
+            raise Exception("Invalid volume of water. Must be between 1.0-200.0")
         # round to 2 decimal places
         vol_water = round(vol_water, 2)
         # use p20 if appropriate volume. Dispense at top of well so nothing touches and you can ues the same tip
@@ -128,6 +162,9 @@ def run(protocol):
         source_well = protocol.loaded_labwares[int(row[0])].wells_by_name()[row[1]]
         dest_well = protocol.loaded_labwares[int(row[2])].wells_by_name()[row[3]]
         vol_dna = float(row[4])
+        # check volume
+        if vol_dna < 1.0 or vol_dna > 200.0:
+            raise Exception("Invalid volume of water. Must be between 1.0-200.0")
         # round to 2 decimal places
         vol_dna = round(vol_dna,2)
         # use p20 if appropriate volume
