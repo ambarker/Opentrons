@@ -28,10 +28,14 @@ def run(protocol):
     # paste data from csv here (in between '''  ''')
     input_data = '''
     source_slot,source_well,dest_slot,dest_well,vol_dna,vol_water
-    1,A1,1,A1,40,60
-    1,C1,1,B1,66.67,33.33
-    2,D1,2,C1,20,80
-    3,E3,2,D1,10,90
+    1,A1,5,A1,40,60
+    1,C1,5,B1,66.67,19.5
+    1,D1,5,C1,20,80
+    2,E3,5,D1,10.2,90
+    2,A12,6,A1,45.9,43.0
+    2,B5,6,B1,87.2,1.7
+    2,H8,6,C1,80.1,8.8
+    3,C11,6,D1,54.1,34.8
     '''
 
 
@@ -91,6 +95,12 @@ def run(protocol):
                 for line in input_data.splitlines()
                 if line.split(',')[0].strip()][1:]
 
+    # set aspirate and dispense speeds
+    p20.flow_rate.aspirate = 150
+    p20.flow_rate.dispense = 150
+    p300.flow_rate.aspirate = 150
+    p300.flow_rate.dispense = 150
+
     # add water to all destination wells
     # first have both pipettes pick up tips
     p20.pick_up_tip()
@@ -99,6 +109,8 @@ def run(protocol):
     for row in csv_data:
         dest_well = protocol.loaded_labwares[int(row[2])].wells_by_name()[row[3]]
         vol_water = float(row[5])
+        # round to 2 decimal places
+        vol_water = round(vol_water, 2)
         # use p20 if appropriate volume. Dispense at top of well so nothing touches and you can ues the same tip
         if 0 < vol_water <= 20:
             p20.transfer(vol_water, water, dest_well.top(1), blow_out=True,
@@ -116,6 +128,8 @@ def run(protocol):
         source_well = protocol.loaded_labwares[int(row[0])].wells_by_name()[row[1]]
         dest_well = protocol.loaded_labwares[int(row[2])].wells_by_name()[row[3]]
         vol_dna = float(row[4])
+        # round to 2 decimal places
+        vol_dna = round(vol_dna,2)
         # use p20 if appropriate volume
         if 0 < vol_dna <= 20:
             p20.transfer(vol_dna, source_well, dest_well, blow_out=True,
