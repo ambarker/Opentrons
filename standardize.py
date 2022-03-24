@@ -3,8 +3,8 @@ import csv
 metadata = {
     'protocolName': 'Standardize DNA Concentrations',
     'author': 'AMB, last updated 3/24/22',
-    'description': 'Adds designated amounts of DNA and water to wells in order to '
-                   'standardize samples to a target concentration',
+    'description': 'Standardize samples to target DNA concentration by adding designated amounts of DNA '
+                   'and water to wells.',
     'apiLevel': '2.11'
 }
 
@@ -348,7 +348,7 @@ def run(protocol):
                         blowout_location='destination well', new_tip='always')
         # use p300 if appropriate volume
         if vol_dna > 20:
-            p300.transfer(vol_dna, source_well, dest_well, blow_out=True,
+            p300.transfer(vol_dna, source_well, dest_well, touch_tip=True, blow_out=True,
                         blowout_location='destination well', new_tip='always')
 
     # turn off lights
