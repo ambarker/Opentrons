@@ -240,40 +240,40 @@ def run(protocol):
     # load plates
     # add first source DNA plate
     if source_plate_type == 'nest_100ul':
-        protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '1')
+        protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '1', 'DNA source plate 1')
     elif source_plate_type == 'biorad_200ul':
-        protocol.load_labware('biorad_96_wellplate_200ul_pcr', '1')
+        protocol.load_labware('biorad_96_wellplate_200ul_pcr', '1', 'DNA source plate 1')
     else:
         raise Exception("Invalid source plate type")
     #if more than one plate, add 2nd
     if num_source_plates > 1:
         if source_plate_type == 'nest_100ul':
-            protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '2')
+            protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '2', 'DNA source plate 2')
         elif source_plate_type == 'biorad_200ul':
-            protocol.load_labware('biorad_96_wellplate_200ul_pcr', '2')
+            protocol.load_labware('biorad_96_wellplate_200ul_pcr', '2', 'DNA source plate 2')
         else:
             raise Exception('Invalid source plate type')
     # if more than 2 plates, add 3rd
     if num_source_plates > 2:
         if source_plate_type == 'nest_100ul':
-            protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '3')
+            protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '3', 'DNA source plate 3')
         elif source_plate_type == 'biorad_200ul':
-            protocol.load_labware('biorad_96_wellplate_200ul_pcr', '3')
+            protocol.load_labware('biorad_96_wellplate_200ul_pcr', '3', 'DNA source plate 3')
         else:
             raise Exception('Invalid source plate type')
     # add first DNA destination plate
     if destination_plate_type == 'nest_100ul':
-        protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt','5')
+        protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt','5', 'DNA destination plate 1')
     elif destination_plate_type == 'biorad_200ul':
-        protocol.load_labware('biorad_96_wellplate_200ul_pcr', '5')
+        protocol.load_labware('biorad_96_wellplate_200ul_pcr', '5', 'DNA destination plate 1')
     else:
         raise Exception('Invalid destination plate type')
     # if more than one plate, add second
     if num_destination_plates > 1:
         if destination_plate_type == 'biorad_200ul':
-            protocol.load_labware('biorad_96_wellplate_200ul_pcr', '6')
+            protocol.load_labware('biorad_96_wellplate_200ul_pcr', '6', 'DNA destination plate 2')
         elif destination_plate_type == 'nest_100ul':
-            protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '6')
+            protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '6', 'DNA destination plate 2')
         else:
             raise Exception('Invalid destination plate type')
 
