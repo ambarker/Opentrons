@@ -344,7 +344,7 @@ def run(protocol):
         vol_dna = round(vol_dna,2)
         # use p20 if appropriate volume
         if 0 < vol_dna <= 20:
-            p20.transfer(vol_dna, source_well, dest_well, blow_out=True,
+            p20.transfer(vol_dna, source_well, dest_well, touch_tip=True, blow_out=True,
                         blowout_location='destination well', new_tip='always')
         # use p300 if appropriate volume
         if vol_dna > 20:
