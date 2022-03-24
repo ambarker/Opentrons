@@ -302,12 +302,14 @@ def run(protocol):
                 if line.split(',')[0].strip()][1:]
 
     # set aspirate and dispense speeds
+    # smaller volumes need to be dispnensed slower than larger volumes
     p20.flow_rate.aspirate = 150
-    p20.flow_rate.dispense = 150
+    p20.flow_rate.dispense = 50
     p300.flow_rate.aspirate = 150
     p300.flow_rate.dispense = 150
 
-    # add water to all destination wells
+    # add water to destination wells for volumes 10 ul to 200 ul
+    # smaller volumes will be added in a separate step after this
     # first have both pipettes pick up tips
     p20.pick_up_tip()
     p300.pick_up_tip()
@@ -320,17 +322,32 @@ def run(protocol):
             raise Exception("Invalid volume of water. Must be between 0.0-200.0")
         # round to 2 decimal places
         vol_water = round(vol_water, 2)
-        # use p20 if appropriate volume. Dispense at top of well so nothing touches and you can ues the same tip
-        if 0 < vol_water <= 20:
+        # use p20 if between 10-20 and dispense at top of well so nothing touches and you can ues the same tip
+        if 10 <= vol_water <= 20:
             p20.transfer(vol_water, water, dest_well.top(1), blow_out=True,
                         blowout_location='destination well', new_tip='never')
-        # use p300 if appropriate volume. Dispense at top of well so nothing touches and you can ues the same tip
+        # use p300 if >20 and dispense at top of well so nothing touches and you can ues the same tip
         if vol_water > 20:
             p300.transfer(vol_water, water, dest_well.top(1), blow_out=True,
                         blowout_location='destination well', new_tip='never')
     # drop tips after all water has been added
     p20.drop_tip()
     p300.drop_tip()
+
+    # add smaller volumes of water
+    # loops through wells  same as above
+    for row in csv_data:
+        dest_well = protocol.loaded_labwares[int(row[2])].wells_by_name()[row[3]]
+        vol_water = float(row[5])
+        # check volume
+        if vol_water < 0.0 or vol_water > 200.0:
+            raise Exception("Invalid volume of water. Must be between 0.0-200.0")
+        # round to 2 decimal places
+        vol_water = round(vol_water, 2)
+        # use p20 if <10 and touch tip to knock off bead of water. Change tip afterward
+        if vol_water < 10:
+            p20.transfer(vol_water, water, dest_well.top(), blow_out=True,
+                         blowout_location='destination well', touch_tip=True, new_tip='always')
 
     # add dna to each well
     for row in csv_data:
@@ -339,17 +356,17 @@ def run(protocol):
         vol_dna = float(row[4])
         # check volume
         if vol_dna < 1.0 or vol_dna > 200.0:
-            raise Exception("Invalid volume of water. Must be between 1.0-200.0")
+            raise Exception("Invalid volume of dna. Must be between 1.0-200.0")
         # round to 2 decimal places
         vol_dna = round(vol_dna,2)
         # use p20 if appropriate volume
         if 0 < vol_dna <= 20:
-            p20.transfer(vol_dna, source_well, dest_well, touch_tip=True, blow_out=True,
-                        blowout_location='destination well', new_tip='always')
+            p20.transfer(vol_dna, source_well, dest_well, blow_out=True,
+                        blowout_location='destination well', touch_tip=True, new_tip='always')
         # use p300 if appropriate volume
         if vol_dna > 20:
-            p300.transfer(vol_dna, source_well, dest_well, touch_tip=True, blow_out=True,
-                        blowout_location='destination well', new_tip='always')
+            p300.transfer(vol_dna, source_well, dest_well, blow_out=True,
+                        blowout_location='destination well', touch_tip=True, new_tip='always')
 
     # turn off lights
     protocol.set_rail_lights(False)
