@@ -2,7 +2,7 @@ import csv
 
 metadata = {
     'protocolName': 'Standardize DNA Concentrations',
-    'author': 'AMB, last updated 3/23/22',
+    'author': 'AMB, last updated 3/24/22',
     'description': 'Adds designated amounts of DNA and water to wells in order to '
                    'standardize samples to a target concentration',
     'apiLevel': '2.11'
@@ -29,6 +29,9 @@ def run(protocol):
 
     # destination plate type ('biorad_200ul' or 'nest_100ul', all lowercase and in single quotes)
     destination_plate_type = 'biorad_200ul'
+
+    # 3rd tip rack type ('20','300', or 'none',  in single quotes)
+    extra_rack_type = '300'
 
     # sample standardization info
     # paste data from csv here (in between '''  ''')
@@ -220,14 +223,30 @@ def run(protocol):
 
     # Define hardware, pipettes/tips, plates
     # load tips
-    tips300 = [
-     protocol.load_labware(
-      'opentrons_96_tiprack_300ul', str(slot)) for slot in [
-      7, 10, 11]]
-    tips20 = [
-     protocol.load_labware(
-      'opentrons_96_filtertiprack_20ul', str(slot)) for slot in [
-      8, 9]]
+    if extra_rack_type == '300':
+        tips300 = [protocol.load_labware(
+            'opentrons_96_tiprack_300ul', str(slot)) for slot in [
+            7, 10, 11]]
+        tips20 = [protocol.load_labware(
+            'opentrons_96_filtertiprack_20ul', str(slot)) for slot in [
+            8, 9]]
+    elif extra_rack_type == '20':
+        tips300 = [protocol.load_labware(
+            'opentrons_96_tiprack_300ul', str(slot)) for slot in [
+            10, 11]]
+        tips20 = [protocol.load_labware(
+            'opentrons_96_filtertiprack_20ul', str(slot)) for slot in [
+            7, 8, 9]]
+    elif extra_rack_type == 'none':
+        tips300 = [protocol.load_labware(
+            'opentrons_96_tiprack_300ul', str(slot)) for slot in [
+            10, 11]]
+        tips20 = [protocol.load_labware(
+            'opentrons_96_filtertiprack_20ul', str(slot)) for slot in [
+             8, 9]]
+    else:
+        raise Exception("Extra tip rack type not specified. Must be '20', '300', or 'none'")
+
     # specify pipette, mount location, and tips
     p300 = protocol.load_instrument("p300_single_gen2", mount=pipette_mount_300, tip_racks=tips300)
     p20 = protocol.load_instrument("p20_single_gen2", mount=pipette_mount_20, tip_racks=tips20)
