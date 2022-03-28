@@ -14,10 +14,10 @@ def run(protocol):
     # location of p20 single channel ('left' or 'right', all lowercase and in single quotes)
     pipette_mount_20 = 'right'
 
-    # number of sample plates (max 5)
+    # number of sample plates (integer, max 5)
     sample_plates = 2
 
-    # number of 20 ul tip racks loaded (max 5, should match the number of sample plates)
+    # number of 20 ul tip racks loaded (integer, max 5, should match the number of sample plates)
     num_racks = 2
 
     # number of samples in each plate (list of numbers, surrounded by brackets and separated by commas)
@@ -40,7 +40,7 @@ def run(protocol):
     # sample plate type ('biorad_200ul' or 'nest_100ul', all lowercase and in single quotes)
     plate_type = 'biorad_200ul'
 
-    # volume (ul) of master mix to add to each well
+    # volume (ul) of master mix to add to each well (must be 1-20 ul)
     mm_vol = 11.1
 
     # mix after pipetting master mix into sample ('yes' or 'no', all lowercase and in single quotes)
@@ -52,7 +52,6 @@ def run(protocol):
     protocol.set_rail_lights(True)
 
     # Define hardware
-
     # load designated number of tip racks
     slot_range = list(range(7, 7 + num_racks))
     tips20 = [protocol.load_labware(
