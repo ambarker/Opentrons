@@ -1,5 +1,3 @@
-import csv
-
 metadata = {
     'protocolName': 'Distribute master mix into sample plates',
     'author': 'AMB, last updated 3/28/22',
