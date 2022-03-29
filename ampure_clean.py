@@ -32,6 +32,9 @@ def run(protocol):
     etoh_volume = 100
 
     # volume of ampure/PEG (ul)
+    # Not recommended that PCR_volume + bead_volume >180 ul
+    # well can hold total volume of 200 ul but when the pipette tip is inserted into the well it
+    # can cause the volume to spill over the top of the well
     bead_volume = 62
 
     # volume of elution buffer (ul)
@@ -146,7 +149,7 @@ def run(protocol):
         p300m.transfer(
          bead_volume, beads.bottom(1), column[0].bottom(3), new_tip='never')
         # pipette up and down 5 times
-        p300m.mix(5, bead_volume, column[0].bottom(2))
+        p300m.mix(5, (bead_volume + PCR_volume), column[0].bottom(2))
         p300m.move_to(column[0].top())
         p300m.blow_out()
         # touch pipette tip to side of wells to knock off any remaining liquid
