@@ -132,6 +132,17 @@ def run(protocol):
     else:
         raise Exception("Invalid number of groups")
 
+    # If doing half a plate just elute as normal but if doing a full plate
+    # need to add water halfway through the 2nd ethanol wash so beads aren't overdried
+    if num_groups == 1 or num_groups == 2:
+        elute_groups = 1
+        elute_cols = [[0, num_cols]]
+    if num_groups == 3 or num_groups == 4:
+        elute_groups = 2
+        elute_cols = [[0, 6], [6, num_cols]]
+    else:
+        raise Exception("Invalid number of groups")
+
     # Add ampure/PEG
     for index, column in enumerate(mag_plate.columns()[:num_cols]):
         ccst = capture_current_starting_tip()
@@ -235,6 +246,8 @@ beads to settle. Protocol will resume automatically.")
         p300m.flow_rate.aspirate = 100
         p300m.flow_rate.dispense = 150
         p300m.pick_up_tip()
+
+        # Add etoh
         for index, column in enumerate(mag_plate.columns()[grps[g][0]:grps[g][1]], grps[g][0]):
             p300m.transfer(
                 etoh_volume, etoh_2.bottom(1), column[0].top(-1), new_tip='never')
@@ -273,10 +286,23 @@ beads to settle. Protocol will resume automatically.")
             p300m.blow_out(waste_reservoir.wells()[0].top())
             p300m.drop_tip()
 
+        # add water to the first 6 columns if doing a full plate so beads don't over dry
+        # they will be mixed later
+        if elute_groups == 2:
+            # add water after doing 2nd set of columns
+            if g == 2:
+                for index, column in enumerate(mag_plate.columns()[elute_cols[0][0]:elute_cols[0][1]], elute_cols[0][0]):
+                    p300m.pick_up_tip()
+                    # add water/elution buffer to samples
+                    p300m.transfer(
+                        elution_buffer_volume, water.bottom(1), column[0].top(), new_tip='never')
+
     # Dry at RT
-    msg = "Drying the beads for " + str(drying_time) + " minutes. Protocol \
-        will resume automatically."
-    protocol.delay(minutes=drying_time, msg=msg)
+    # Only needed if doing an odd number of groups
+    if num_groups == 1 or num_groups == 3:
+        msg = "Drying the beads for 2 minutes. Protocol \
+            will resume automatically."
+        protocol.delay(minutes=2, msg=msg)
 
     # Disengage MagDeck
     mag_deck.disengage()
@@ -284,21 +310,42 @@ beads to settle. Protocol will resume automatically.")
     # Elute DNA
     p300m.flow_rate.aspirate = 50
     p300m.flow_rate.dispense = 50
-    for index, column in enumerate(mag_plate.columns()[:num_cols]):
-        p300m.pick_up_tip()
-        # add water/elution buffer to samples
-        p300m.transfer(
-            elution_buffer_volume, water.bottom(1), column[0].bottom(3), new_tip='never'
-        )
-        # pipette up and down 5 times
-        p300m.mix(5, elution_buffer_volume, column[0].bottom(2))
-        p300m.move_to(column[0].top())
-        p300m.blow_out()
-        # touch pipette tip to sides of well to knock off remaining liquid
-        p300m.touch_tip()
-        p300m.drop_tip()
+    # if one elution group just add water/mix as normal
+    if elute_groups == 1:
+        for index, column in enumerate(mag_plate.columns()[:num_cols]):
+            p300m.pick_up_tip()
+            # add water/elution buffer to samples
+            p300m.transfer(
+                elution_buffer_volume, water.bottom(1), column[0].bottom(3), new_tip='never')
+            # pipette up and down 5 times
+            p300m.mix(5, elution_buffer_volume, column[0].bottom(2))
+            p300m.move_to(column[0].top())
+            p300m.blow_out()
+            p300m.touch_tip()
+            p300m.drop_tip()
+    # if 2 elution groups need to go back and mix water/beads from first group
+    if elute_groups == 2:
+        for index, column in enumerate(mag_plate.columns()[elute_cols[0][0]:elute_cols[0][1]], elute_cols[0][0]):
+            p300m.pick_up_tip(named_tips['sup_tips'][index])
+            p300m.mix(5, elution_buffer_volume, column[0].bottom(2))
+            p300m.move_to(column[0].top())
+            p300m.blow_out()
+            p300m.touch_tip()
+            p300m.drop_tip()
+        # then add water/mix rest of samples
+        for index, column in enumerate(mag_plate.columns()[elute_cols[1][0]:elute_cols[1][1]], elute_cols[1][0]):
+            p300m.pick_up_tip()
+            # add water/elution buffer to samples
+            p300m.transfer(
+                elution_buffer_volume, water.bottom(1), column[0].bottom(3), new_tip='never')
+            # pipette up and down 5 times
+            p300m.mix(5, elution_buffer_volume, column[0].bottom(2))
+            p300m.move_to(column[0].top())
+            p300m.blow_out()
+            p300m.touch_tip()
+            p300m.drop_tip()
 
-    # Incubate at RT
+# Incubate at RT
     protocol.comment("Incubating the beads for "+str(settling_time)+" minutes. \
     Protocol will resume automatically.")
     protocol.delay(minutes=incubation_time)
