@@ -2,7 +2,7 @@ import math
 
 metadata = {
     'protocolName': 'Standard ampure/PEG clean ',
-    'author': 'AMB, last updated 3/14/22',
+    'author': 'AMB, last updated 4/11/22',
     'description': 'Standard ampure/PEG clean up protocol',
     'apiLevel': '2.9'
 }
@@ -20,7 +20,7 @@ def run(protocol):
     # specify if adding beads or PEG ('beads' or 'peg', all lowercase and in single quotes)
     # if beads are used, they will be mixed before adding to samples to avoid beads settling
     # on the bottom of the reservoir
-    beads_peg = 'beads'
+    beads_peg = 'peg'
 
     # volume of product that is being cleaned (ul)
     PCR_volume = 88
@@ -137,7 +137,7 @@ def run(protocol):
     if num_groups == 1 or num_groups == 2:
         elute_groups = 1
         elute_cols = [[0, num_cols]]
-    if num_groups == 3 or num_groups == 4:
+    elif num_groups == 3 or num_groups == 4:
         elute_groups = 2
         elute_cols = [[0, 6], [6, num_cols]]
     else:
@@ -195,7 +195,7 @@ beads to settle. Protocol will resume automatically.")
         p300m.dispense(total_vol, waste_reservoir.wells()[0].top())
         p300m.blow_out(waste_reservoir.wells()[0].top())
         p300m.return_tip()
-
+    '''
     # EtOH wash 1
     # loop through groups
     for g in range(0, num_groups):
@@ -240,13 +240,12 @@ beads to settle. Protocol will resume automatically.")
             p300m.dispense(etoh_volume + 10, waste_reservoir.wells()[0].top())
             p300m.blow_out(waste_reservoir.wells()[0].top())
             p300m.return_tip()
-
+    '''
     # EtOH wash 2
     for g in range(0, num_groups):
         p300m.flow_rate.aspirate = 100
         p300m.flow_rate.dispense = 150
         p300m.pick_up_tip()
-
         # Add etoh
         for index, column in enumerate(mag_plate.columns()[grps[g][0]:grps[g][1]], grps[g][0]):
             p300m.transfer(
@@ -254,7 +253,7 @@ beads to settle. Protocol will resume automatically.")
             p300m.move_to(column[0].top())
             p300m.blow_out()
             protocol.delay(seconds=1)
-        p300m.drop_tip()
+            p300m.drop_tip()
 
         # Incubate etoh
         # if 3 columns in group, go straight to aspirate
@@ -284,18 +283,33 @@ beads to settle. Protocol will resume automatically.")
             p300m.air_gap(10)
             p300m.dispense(etoh_volume+10, waste_reservoir.wells()[0].top())
             p300m.blow_out(waste_reservoir.wells()[0].top())
-            p300m.drop_tip()
+            # if group 2 return tips so we can use them again later for mixing
+            if g == 1:
+                p300m.return_tip()
+            # all other tips can go to trash
+            else:
+                p300m.drop_tip()
 
         # add water to the first 6 columns if doing a full plate so beads don't over dry
         # they will be mixed later
         if elute_groups == 2:
-            # add water after doing 2nd set of columns
-            if g == 2:
+            # add water after doing 2nd group of columns
+            # zero based indexing so g = 1 is group 2
+            if g == 1:
+                p300m.pick_up_tip()
+                # add counter
+                col_count = 1
+                # add water/elution buffer to samples
                 for index, column in enumerate(mag_plate.columns()[elute_cols[0][0]:elute_cols[0][1]], elute_cols[0][0]):
-                    p300m.pick_up_tip()
-                    # add water/elution buffer to samples
+                    # if on the 4th column (2nd group) add a delay to let the beads dry a little
+                    if col_count == 4:
+                        msg = "Drying the beads for 2 minutes. Protocol \
+                                        will resume automatically."
+                        protocol.delay(minutes=2, msg=msg)
                     p300m.transfer(
                         elution_buffer_volume, water.bottom(1), column[0].top(), new_tip='never')
+                    col_count += 1
+                p300m.drop_tip()
 
     # Dry at RT
     # Only needed if doing an odd number of groups
