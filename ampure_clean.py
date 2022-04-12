@@ -2,7 +2,7 @@ import math
 
 metadata = {
     'protocolName': 'Standard ampure/PEG clean ',
-    'author': 'AMB, last updated 4/11/22',
+    'author': 'AMB, last updated 4/12/22',
     'description': 'Standard ampure/PEG clean up protocol',
     'apiLevel': '2.9'
 }
