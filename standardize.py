@@ -2,7 +2,7 @@ import csv
 
 metadata = {
     'protocolName': 'Standardize DNA Concentrations',
-    'author': 'AMB, last updated 3/25/22',
+    'author': 'AMB, last updated 4/18/22',
     'description': 'Standardize samples to target DNA concentration by adding designated amounts of DNA '
                    'and water to wells.',
     'apiLevel': '2.11'
@@ -18,19 +18,22 @@ def run(protocol):
     # location of p20 single channel ('left' or 'right', all lowercase and in single quotes)
     pipette_mount_20 = 'right'
 
-    # number of source (DNA) plates (integar, min: 1 max: 3)
-    num_source_plates = 3
+    # source plate 1 type ('biorad_200ul' or 'nest_100ul', all lowercase and in single quotes)
+    source_p1 = 'nest_100ul'
 
-    # number of destination (standardized) plates (integar, min: 1 max: 2)
-    num_destination_plates = 2
+    # source plate 2 type ('biorad_200ul', 'nest_100ul', or 'none', all lowercase and in single quotes)
+    source_p2 = 'none'
 
-    # source plate type ('biorad_200ul' or 'nest_100ul', all lowercase and in single quotes)
-    source_plate_type = 'nest_100ul'
+    # source plate 3 type ('biorad_200ul', 'nest_100ul', or 'none', all lowercase and in single quotes)
+    source_p3 = 'none'
 
-    # destination plate type ('biorad_200ul' or 'nest_100ul', all lowercase and in single quotes)
-    destination_plate_type = 'biorad_200ul'
+    # destination plate 1 type ('biorad_200ul' or 'nest_100ul', all lowercase and in single quotes)
+    destination_p1 = 'biorad_200ul'
 
-    # pre-used or fresh destination plate ('used' or 'fresh', all lowercase and in single quotes)
+    # destination plate 2 type ('biorad_200ul', 'nest_100ul', or 'none', all lowercase and in single quotes)
+    destination_p2 = 'none'
+
+    # pre-used or fresh destination plate ('used' or 'clean', all lowercase and in single quotes)
     destination_plate_status = 'used'
 
     # 3rd tip rack type ('20','300', or 'none',  in single quotes)
@@ -62,10 +65,6 @@ def run(protocol):
         raise Exception('Must attach single channel p300')
     if pipette_mount_20 is None:
         raise Exception("Must attach single channel p20")
-    if num_source_plates < 1 or num_source_plates > 3:
-        raise Exception("Invalid number of source plates. Must be 1-3")
-    if num_destination_plates < 1 or num_destination_plates > 2:
-        raise Exception("Invalid number of destination plates. Must be 1-2")
 
     # Define hardware, pipettes/tips, plates
     # load tips
@@ -104,43 +103,47 @@ def run(protocol):
 
     # load plates
     # add first source DNA plate
-    if source_plate_type == 'nest_100ul':
+    if source_p1 == 'nest_100ul':
         protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '1', 'DNA source plate 1')
-    elif source_plate_type == 'biorad_200ul':
+    elif source_p1 == 'biorad_200ul':
         protocol.load_labware('biorad_96_wellplate_200ul_pcr', '1', 'DNA source plate 1')
     else:
         raise Exception("Invalid source plate type")
-    # if more than one plate, add 2nd
-    if num_source_plates > 1:
-        if source_plate_type == 'nest_100ul':
-            protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '2', 'DNA source plate 2')
-        elif source_plate_type == 'biorad_200ul':
-            protocol.load_labware('biorad_96_wellplate_200ul_pcr', '2', 'DNA source plate 2')
-        else:
-            raise Exception('Invalid source plate type')
-    # if more than 2 plates, add 3rd
-    if num_source_plates > 2:
-        if source_plate_type == 'nest_100ul':
-            protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '3', 'DNA source plate 3')
-        elif source_plate_type == 'biorad_200ul':
-            protocol.load_labware('biorad_96_wellplate_200ul_pcr', '3', 'DNA source plate 3')
-        else:
-            raise Exception('Invalid source plate type')
+    # add 2nd source plate
+    if source_p2 == 'nest_100ul':
+        protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '2', 'DNA source plate 2')
+    elif source_p2 == 'biorad_200ul':
+        protocol.load_labware('biorad_96_wellplate_200ul_pcr', '2', 'DNA source plate 2')
+    elif source_p2 == 'none':
+        pass
+    else:
+        raise Exception('Invalid source plate type')
+    # add 3rd source plate
+    if source_p3 == 'nest_100ul':
+        protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '3', 'DNA source plate 3')
+    elif source_p3 == 'biorad_200ul':
+        protocol.load_labware('biorad_96_wellplate_200ul_pcr', '3', 'DNA source plate 3')
+    elif source_p3 == 'none':
+        pass
+    else:
+        raise Exception('Invalid source plate type')
+
     # add first DNA destination plate
-    if destination_plate_type == 'nest_100ul':
+    if destination_p1 == 'nest_100ul':
         protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '5', 'DNA destination plate 1')
-    elif destination_plate_type == 'biorad_200ul':
+    elif destination_p1 == 'biorad_200ul':
         protocol.load_labware('biorad_96_wellplate_200ul_pcr', '5', 'DNA destination plate 1')
     else:
         raise Exception('Invalid destination plate type')
-    # if more than one plate, add second
-    if num_destination_plates > 1:
-        if destination_plate_type == 'biorad_200ul':
-            protocol.load_labware('biorad_96_wellplate_200ul_pcr', '6', 'DNA destination plate 2')
-        elif destination_plate_type == 'nest_100ul':
-            protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '6', 'DNA destination plate 2')
-        else:
-            raise Exception('Invalid destination plate type')
+    # add 2nd destination plate
+    if destination_p2 == 'biorad_200ul':
+        protocol.load_labware('biorad_96_wellplate_200ul_pcr', '6', 'DNA destination plate 2')
+    elif destination_p2 == 'nest_100ul':
+        protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', '6', 'DNA destination plate 2')
+    elif destination_p2 == 'none':
+        pass
+    else:
+        raise Exception('Invalid destination plate type')
 
     # parse input data
     csv_data = [[val.strip() for val in line.split(',')]

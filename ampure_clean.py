@@ -253,7 +253,7 @@ beads to settle. Protocol will resume automatically.")
             p300m.move_to(column[0].top())
             p300m.blow_out()
             protocol.delay(seconds=1)
-            p300m.drop_tip()
+        p300m.drop_tip()
 
         # Incubate etoh
         # if 3 columns in group, go straight to aspirate
@@ -284,11 +284,12 @@ beads to settle. Protocol will resume automatically.")
             p300m.dispense(etoh_volume+10, waste_reservoir.wells()[0].top())
             p300m.blow_out(waste_reservoir.wells()[0].top())
             # if group 2 return tips so we can use them again later for mixing
-            if g == 1:
-                p300m.return_tip()
-            # all other tips can go to trash
-            else:
-                p300m.drop_tip()
+            if elute_groups == 2:
+                if g == 0 or g == 1:
+                    p300m.return_tip()
+                # all other tips can go to trash
+                else:
+                    p300m.drop_tip()
 
         # add water to the first 6 columns if doing a full plate so beads don't over dry
         # they will be mixed later

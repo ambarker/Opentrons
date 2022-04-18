@@ -21,7 +21,7 @@ def run(protocol):
     # number of samples in each plate (list of numbers, surrounded by brackets and separated by commas)
     # ex: [96, 12, 72]
     # (will go by rows, i.e. 12 would mean samples A1-A12)
-    num_samples_each_plate = [3, 4]
+    num_samples_each_plate = [65, 34]
 
     # list wells that should be skipped (well name in single quotes and in brackets. Multiple wells separated by commas
     # ex: ['C2', 'D11', 'E1']
@@ -29,14 +29,17 @@ def run(protocol):
     # ex: you want the protocol to distribute all the say to A12, but skip A10
     # you sample count would be 12 and then you would indicate to skip A10: P1_skip = [`A10']
     # must indicate what to skip for each plate, if nothing than don't put anything between brackets
-    P1_skip = ['A1', 'A2']
-    P2_skip = ['A4']
+    P1_skip = []
+    P2_skip = []
     P3_skip = []
     P4_skip = []
     P5_skip = []
 
     # sample plate type ('biorad_200ul' or 'nest_100ul', all lowercase and in single quotes)
     plate_type = 'biorad_200ul'
+
+    # type of tube containing master mix ('1.5ml' or '2ml', all lowercase and in single quotes)
+    mm_tube_type = '1.5ml'
 
     # volume (ul) of master mix to add to each well (must be 1-20 ul)
     mm_vol = 11.1
@@ -103,7 +106,13 @@ def run(protocol):
             plate_names.append(plate_5)
 
     # add master mix plate
-    tube_rack = protocol.load_labware('opentrons_24_tuberack_generic_2ml_screwcap', '1', 'master mix tube')
+    if mm_tube_type == '1.5ml':
+        tube_rack = protocol.load_labware('opentrons_24_aluminumblock_nest_1.5ml_snapcap', '1', 'master mix tube')
+    elif mm_tube_type == '2ml':
+        tube_rack = protocol.load_labware('opentrons_24_tuberack_generic_2ml_screwcap', '1', 'master mix tube')
+    else:
+        raise Exception('Invalid tube type for master mix.')
+
     mm_tube = tube_rack.wells_by_name()['A1']
 
     # set aspirate and dispense speeds
