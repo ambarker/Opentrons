@@ -73,21 +73,21 @@ def run(protocol):
             'opentrons_96_tiprack_300ul', str(slot)) for slot in [
             7, 10, 11]]
         tips20 = [protocol.load_labware(
-            'opentrons_96_filtertiprack_20ul', str(slot)) for slot in [
+            'opentrons_96_tiprack_20ul', str(slot)) for slot in [
             8, 9]]
     elif extra_rack_type == '20':
         tips300 = [protocol.load_labware(
             'opentrons_96_tiprack_300ul', str(slot)) for slot in [
             10, 11]]
         tips20 = [protocol.load_labware(
-            'opentrons_96_filtertiprack_20ul', str(slot)) for slot in [
+            'opentrons_96_tiprack_20ul', str(slot)) for slot in [
             7, 8, 9]]
     elif extra_rack_type == 'none':
         tips300 = [protocol.load_labware(
             'opentrons_96_tiprack_300ul', str(slot)) for slot in [
             10, 11]]
         tips20 = [protocol.load_labware(
-            'opentrons_96_filtertiprack_20ul', str(slot)) for slot in [
+            'opentrons_96_tiprack_20ul', str(slot)) for slot in [
             8, 9]]
     else:
         raise Exception("Extra tip rack type not specified. Must be '20', '300', or 'none'")
