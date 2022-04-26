@@ -1,5 +1,3 @@
-import csv
-
 metadata = {
     'protocolName': 'Standardize DNA Concentrations',
     'author': 'AMB, last updated 4/18/22',
