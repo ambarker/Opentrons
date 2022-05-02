@@ -13,7 +13,7 @@ def run(protocol):
     pipette_mount_20 = 'right'
 
     # master mix on temperature block to keep cold ('yes' or 'no', all lowercase and in single quotes)
-    mm_block = 'yes'
+    mm_block = 'no'
 
     # temperature that block should be set to (integar, min: 4, max: 95)
     mm_temp = 4
@@ -23,7 +23,7 @@ def run(protocol):
 
     # specify if tip should be changed in between wells ('yes' or 'no', all lowercase and in single quotes)
     # tip touches sides of wells after dispensing so should be no if there is DNA present in wells
-    change_tip = 'yes'
+    change_tip = 'no'
 
     # number of 20 ul tip racks loaded (integer, max: 5, should match the number of sample plates if changing tips between wells)
     num_racks = 2
@@ -31,7 +31,7 @@ def run(protocol):
     # number of samples in each plate (list of numbers, surrounded by brackets and separated by commas)
     # ex: [96, 12, 72]
     # (will go by rows, i.e. 12 would mean samples A1-A12, 30 would mean A1-C6)
-    num_samples_each_plate = [65, 34]
+    num_samples_each_plate = [12, 24]
 
     # list wells that should be skipped (well name in single quotes and in brackets. Multiple wells separated by commas
     # ex: ['C2', 'D11', 'E1']
@@ -39,8 +39,8 @@ def run(protocol):
     # ex: you want the protocol to distribute all the say to A12, but skip A10
     # you sample count would be 12 and then you would indicate to skip A10: P1_skip = [`A10']
     # must indicate what to skip for each plate, if nothing or not using that plate don't put anything between brackets
-    P1_skip = []
-    P2_skip = []
+    P1_skip = [A1, A4]
+    P2_skip = [B1]
     P3_skip = []
     P4_skip = []
     P5_skip = []
