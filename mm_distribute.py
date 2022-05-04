@@ -1,6 +1,6 @@
 metadata = {
     'protocolName': 'Distribute master mix into sample plates',
-    'author': 'AMB, last updated 4/26/22',
+    'author': 'AMB, last updated 5/3/22',
     'description': 'Generic protocol to distribute master mix from 2 mL tube to PCR plates or strip tubes.',
     'apiLevel': '2.11'
 }
@@ -16,31 +16,43 @@ def run(protocol):
     mm_block = 'no'
 
     # temperature that block should be set to (integar, min: 4, max: 95)
-    mm_temp = 4
+    # put None if not using temp block (no quotes, first letter capitalized)
+    mm_temp = None
 
     # number of sample plates (integer, max: 5)
-    sample_plates = 2
+    sample_plates = 1
+
+    # volume (ul) of master mix to add to each well (must be 1-20 ul)
+    mm_vol = 5
+
+    # specify if pipette tip should tap the side of well after dispensing ('yes' or 'no', all lowercase and in single quotes)
+    # recommended 'yes' if dispensing <10 ul
+    touch_tip = 'yes'
+
+    # mix after pipetting master mix into well ('yes' or 'no', all lowercase and in single quotes)
+    mix_sample = 'no'
 
     # specify if tip should be changed in between wells ('yes' or 'no', all lowercase and in single quotes)
-    # tip touches sides of wells after dispensing so should be no if there is DNA present in wells
+    # if tip touches sides of wells after dispensing and there is DNA already present in well this should be 'yes'
+    # if mixing sample after dispensing, should be 'yes'
     change_tip = 'no'
 
     # number of 20 ul tip racks loaded (integer, max: 5, should match the number of sample plates if changing tips between wells)
-    num_racks = 2
+    num_racks = 1
 
-    # number of samples in each plate (list of numbers, surrounded by brackets and separated by commas)
+    # number of samples in each plate (list of integers, surrounded by brackets and separated by commas)
     # ex: [96, 12, 72]
     # (will go by rows, i.e. 12 would mean samples A1-A12, 30 would mean A1-C6)
-    num_samples_each_plate = [12, 24]
+    num_samples_each_plate = [12]
 
     # list wells that should be skipped (well name in single quotes and in brackets. Multiple wells separated by commas
     # ex: ['C2', 'D11', 'E1']
     # these samples should be included in the sample count above
-    # ex: you want the protocol to distribute all the say to A12, but skip A10
-    # you sample count would be 12 and then you would indicate to skip A10: P1_skip = [`A10']
-    # must indicate what to skip for each plate, if nothing or not using that plate don't put anything between brackets
-    P1_skip = [A1, A4]
-    P2_skip = [B1]
+    # ex: you want the protocol to distribute all the way to A12, but skip A10
+    # your sample count would be 12 and then you would indicate to skip A10: P1_skip = ['A10']
+    # if not skipping anything or not using that plate don't put anything between brackets
+    P1_skip = []
+    P2_skip = []
     P3_skip = []
     P4_skip = []
     P5_skip = []
@@ -51,22 +63,20 @@ def run(protocol):
     # type of tube containing master mix ('1.5ml' or '2ml', all lowercase and in single quotes)
     mm_tube_type = '1.5ml'
 
-    # volume (ul) of master mix to add to each well (must be 1-20 ul)
-    mm_vol = 11.1
-
-    # mix after pipetting master mix into well ('yes' or 'no', all lowercase and in single quotes)
-    mix_sample = 'no'
-
     ########## DO NOT EDIT BELOW THIS LINE ##########
 
     # turn on lights if not on already
     protocol.set_rail_lights(True)
 
+    # checks
+    if len(num_samples_each_plate) != sample_plates:
+        raise Exception("The number of sample plates does not match the number of samples for each plate.")
+
     # Define hardware
     # load designated number of tip racks
     slot_range = list(range(7, 7 + num_racks))
     tips20 = [protocol.load_labware(
-            'opentrons_96_filtertiprack_20ul', str(slot)) for slot in slot_range]
+            'opentrons_96_tiprack_20ul', str(slot)) for slot in slot_range]
 
     # specify pipette, mount location, and tips
     p20 = protocol.load_instrument("p20_single_gen2", mount=pipette_mount_20, tip_racks=tips20)
@@ -83,9 +93,9 @@ def run(protocol):
     elif plate_type == "strip_tubes":
         plate_1 = protocol.load_labware('opentrons_96_aluminumblock_generic_pcr_strip_200ul', '2', 'sample plate 1')
         plate_names.append(plate_1)
-
     else:
         raise Exception("Invalid source plate type")
+
     # add 2nd plate
     if sample_plates > 1:
         if plate_type == 'nest_100ul':
@@ -173,6 +183,9 @@ def run(protocol):
     # list of wells to skip for each plate
     wells_skip = [P1_skip, P2_skip, P3_skip, P4_skip, P5_skip]
 
+    # pick up tip that will be used the whole time if not changing in between
+    if change_tip == 'no':
+        p20.pick_up_tip()
     # distribute master mix
     for num_plate in range(0, len(plate_names)):
         for sample in range(0, num_samples_each_plate[num_plate]):
@@ -181,26 +194,22 @@ def run(protocol):
             # move on to next iteration of loop if sample name is in the skip list for this plate
             if sample_name in wells_skip[num_plate]:
                 continue
+            # pick up tip if changing every time
+            if change_tip == 'yes':
+                p20.pick_up_tip()
+            p20.aspirate(mm_vol, mm_tube)
+            p20.dispense(mm_vol, plate.wells_by_name()[sample_name].top())
             if mix_sample == 'yes':
-                if change_tip == 'yes':
-                    p20.transfer(mm_vol, mm_tube, plate.wells_by_name()[sample_name], mix_after=(3, mm_vol),
-                         blow_out=True, blowout_location='destination well', touch_tip=True, new_tip='always')
-                elif change_tip == 'no':
-                    p20.transfer(mm_vol, mm_tube, plate.wells_by_name()[sample_name], mix_after=(3, mm_vol),
-                             blow_out=True, blowout_location='destination well', touch_tip=True, new_tip='never')
-                else:
-                    raise Exception('Must indicate if tip should be changed between samples.')
-            elif mix_sample == 'no':
-                if change_tip == 'yes':
-                    p20.transfer(mm_vol, mm_tube, plate.wells_by_name()[sample_name],
-                             blow_out=True, blowout_location='destination well', touch_tip=True, new_tip='always')
-                elif change_tip == 'no':
-                    p20.transfer(mm_vol, mm_tube, plate.wells_by_name()[sample_name],
-                                 blow_out=True, blowout_location='destination well', touch_tip=True, new_tip='never')
-                else:
-                    raise Exception('Must indicate if tip should be changed between samples.')
-            else:
-                raise Exception('Must indicate if sample should be mixed after adding master mix')
+                p20.mix(5, mm_vol)
+            p20.blow_out()
+            if touch_tip == 'yes':
+                p20.touch_tip()
+            if change_tip == 'yes':
+                p20.drop_tip()
+
+    # drop tip at end if tip wasnt changed between samples
+    if change_tip == 'no':
+        p20.drop_tip()
 
     # turn off lights when protocol compelte
     protocol.set_rail_lights(False)
