@@ -1,6 +1,6 @@
 metadata = {
     'protocolName': 'Standardize DNA Concentrations',
-    'author': 'AMB, last updated 4/18/22',
+    'author': 'AMB, last updated 5/6/22',
     'description': 'Standardize samples to target DNA concentration by adding designated amounts of DNA '
                    'and water to wells.',
     'apiLevel': '2.11'
@@ -20,19 +20,19 @@ def run(protocol):
     source_p1 = 'nest_100ul'
 
     # source plate 2 type ('biorad_200ul', 'nest_100ul', or 'none', all lowercase and in single quotes)
-    source_p2 = 'none'
+    source_p2 = 'nest_100ul'
 
     # source plate 3 type ('biorad_200ul', 'nest_100ul', or 'none', all lowercase and in single quotes)
-    source_p3 = 'none'
+    source_p3 = 'nest_100ul'
 
     # destination plate 1 type ('biorad_200ul' or 'nest_100ul', all lowercase and in single quotes)
     destination_p1 = 'biorad_200ul'
 
     # destination plate 2 type ('biorad_200ul', 'nest_100ul', or 'none', all lowercase and in single quotes)
-    destination_p2 = 'none'
+    destination_p2 = 'biorad_200ul'
 
     # pre-used or fresh destination plate ('used' or 'clean', all lowercase and in single quotes)
-    destination_plate_status = 'used'
+    destination_plate_status = 'clean'
 
     # 3rd tip rack type ('20','300', or 'none',  in single quotes)
     extra_rack_type = 'none'
@@ -42,13 +42,17 @@ def run(protocol):
     input_data = '''
     source_slot,source_well,dest_slot,dest_well,vol_dna,vol_water
     1,A1,5,A1,40,60
-    1,C1,5,B1,66.67,19.5
-    1,D1,5,C1,20,80
-    2,E3,5,D1,10.2,90
-    2,A12,6,A1,45.9,43.0
-    2,B5,6,B1,87.2,1.7
-    2,H8,6,C1,80.1,8.8
-    3,C11,6,D1,54.1,34.8
+    1,A2,5,A2,66.67,19.5
+    1,A3,5,A3,20,80
+    1,A5,5,A4,10.2,90
+    1,A8,5,A5,45.9,43.0
+    1,A12,5,A6,87.2,1.7
+    2,A1,5,A7,80.1,8.8
+    2,A2,5,A8,15.2,5
+    2,A5,6,A1,2,2
+    2,A6,6,A2,67,1
+    2,A8,6,A3,5,10 
+    3,A5,6,D1,54.1,34.8
     '''
 
     ########## DO NOT EDIT BELOW THIS LINE ##########
@@ -95,9 +99,7 @@ def run(protocol):
     p20 = protocol.load_instrument("p20_single_gen2", mount=pipette_mount_20, tip_racks=tips20)
 
     # load reagent labware and specify reagents in each well/columns
-    water_reservoir = protocol.load_labware(
-        'nest_12_reservoir_15ml', '4')
-    water = [water_reservoir.wells_by_name()[well] for well in ['A1']]
+    water_reservoir = protocol.load_labware('nest_12_reservoir_15ml', '4')
 
     # load plates
     # add first source DNA plate
@@ -149,50 +151,73 @@ def run(protocol):
                 if line.split(',')[0].strip()][1:]
 
     # set aspirate and dispense speeds
-    # smaller volumes need to be dispnensed slower than larger volumes
     p20.flow_rate.aspirate = 150
     p20.flow_rate.dispense = 150
     p300.flow_rate.aspirate = 150
     p300.flow_rate.dispense = 150
 
     # add water to destination wells
-    # p300 will use the same tip for all wells
-    # p20 will change tip in between each sample depending on whether or not the destination plate is clean
-    # pickup tip for p300
-    p300.pick_up_tip()
-    # pickup tip for p20 if using the same one for this step
-    if destination_plate_status == 'clean':
+    # if clean p300 and p20  will use the same tip for all wells
+    # if not,p20 will change tip in between each sample if dispensed vol is <10 ul
+    if destination_plate_status == "clean":
+        # pick up tips that will be used the whole time
         p20.pick_up_tip()
-    # loop through wells and add water
-    for row in csv_data:
-        dest_well = protocol.loaded_labwares[int(row[2])].wells_by_name()[row[3]]
-        vol_water = float(row[5])
-        # check volume
-        if vol_water < 0.0 or vol_water > 200.0:
-            raise Exception("Invalid volume of water. Must be between 0.0-200.0")
-        # round to 2 decimal places
-        vol_water = round(vol_water, 2)
-        # use p20 if between 1-20
-        # water tends to cling to tip at vol <20 so a touch-tip step is included
-        if 0 < vol_water <= 20:
-            # if plate previously held DNA, change tip everytime
-            if destination_plate_status == 'used':
-                p20.transfer(vol_water, water, dest_well.top(1), blow_out=True,
-                             blowout_location='destination well', touch_tip=True, new_tip='always')
-            elif destination_plate_status == 'clean':
-                # don't change tips if it's a clean plate
-                p20.transfer(vol_water, water, dest_well.top(1), blow_out=True,
-                             blowout_location='destination well', touch_tip=True, new_tip='never')
-            else:
-                raise Exception("Destination plate status not indicated. Must be 'clean' or 'used'.")
-        # use p300 if >20 and dispense at top of well so nothing touches and you can ues the same tip
-        if vol_water > 20:
-            p300.transfer(vol_water, water, dest_well.top(1), blow_out=True,
-                          blowout_location='destination well', new_tip='never')
-    # drop tips after all water is added
-    p300.drop_tip()
-    if destination_plate_status == 'clean':
+        p300.pick_up_tip()
+        # loop through wells and add water
+        for row in csv_data:
+            dest_well = protocol.loaded_labwares[int(row[2])].wells_by_name()[row[3]]
+            vol_water = float(row[5])
+            # check volume
+            if vol_water < 0.0 or vol_water > 200.0:
+                raise Exception("Invalid volume of water. Must be between 0.0-200.0")
+            # round to 2 decimal places
+            vol_water = round(vol_water, 2)
+            # use p20 if between 1-20
+            # water tends to cling to tip at vol <10 so a touch-tip step is included
+            if 0 < vol_water <= 20:
+                p20.aspirate(vol_water, water_reservoir.wells()[0])
+                p20.dispense(vol_water, dest_well.top())
+                p20.blow_out()
+                if vol_water < 10:
+                    p20.touch_tip()
+            if vol_water > 20:
+                p300.aspirate(vol_water, water_reservoir.wells()[0])
+                p300.dispense(vol_water, dest_well.top())
+                p300.blow_out()
         p20.drop_tip()
+        p300.drop_tip()
+    elif destination_plate_status == "used":
+        # pick up tips
+        p20.pick_up_tip()
+        p300.pick_up_tip()
+        # loop through wells and add water
+        for row in csv_data:
+            dest_well = protocol.loaded_labwares[int(row[2])].wells_by_name()[row[3]]
+            vol_water = float(row[5])
+            # check volume
+            if vol_water < 0.0 or vol_water > 200.0:
+                raise Exception("Invalid volume of water. Must be between 0.0-200.0")
+            # round to 2 decimal places
+            vol_water = round(vol_water, 2)
+            # use p20 if between 1-20
+            # water tends to cling to tip at vol <10 so a touch-tip step is included
+            if 0 < vol_water <= 20:
+                p20.aspirate(vol_water, water_reservoir.wells()[0])
+                p20.dispense(vol_water, dest_well.top())
+                p20.blow_out()
+                if vol_water < 10:
+                    p20.touch_tip()
+                    p20.drop_tip()
+                    p20.pick_up_tip()
+            if vol_water > 20:
+                p300.aspirate(vol_water,  water_reservoir.wells()[0])
+                p300.dispense(vol_water, dest_well.top())
+                p300.blow_out()
+        p20.drop_tip()
+        p300.drop_tip()
+    else:
+        raise Exception("Destination plate status not indicated. Must be 'clean' or 'used'.")
+
 
     # add dna to each well
     for row in csv_data:
@@ -206,12 +231,22 @@ def run(protocol):
         vol_dna = round(vol_dna, 2)
         # use p20 if appropriate volume
         if 0 < vol_dna <= 20:
-            p20.transfer(vol_dna, source_well, dest_well, blow_out=True,
-                         blowout_location='destination well', touch_tip=True, new_tip='always')
+            p20.pick_up_tip()
+            p20.aspirate(vol_dna, source_well)
+            p20.touch_tip()
+            p20.dispense(vol_dna, dest_well)
+            p20.blow_out()
+            p20.touch_tip()
+            p20.drop_tip()
         # use p300 if appropriate volume
         if vol_dna > 20:
-            p300.transfer(vol_dna, source_well, dest_well, blow_out=True,
-                          blowout_location='destination well', touch_tip=True, new_tip='always')
+            p300.pick_up_tip()
+            p300.aspirate(vol_dna, source_well)
+            p300.touch_tip()
+            p300.dispense(vol_dna, dest_well)
+            p300.blow_out()
+            p300.touch_tip()
+            p300.drop_tip()
 
     # turn off lights
     protocol.set_rail_lights(False)

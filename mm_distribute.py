@@ -211,5 +211,5 @@ def run(protocol):
     if change_tip == 'no':
         p20.drop_tip()
 
-    # turn off lights when protocol compelte
+    # turn off lights when protocol complete
     protocol.set_rail_lights(False)
